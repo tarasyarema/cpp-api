@@ -9,32 +9,16 @@
 
 // Custom libraries
 #include "httplib.h"
+#include "utils.h"
 
 #define BUFFER_SIZE 1024
-#define MOD 0x45d9f3b
-#define ITERATIONS 1 // 1e+6
-
 #define HOST "0.0.0.0"
 #define PORT 8080
 
-#define ull unsigned long long int
 
 using namespace httplib;
 using namespace std;
 using namespace chrono;
-
-ull hash_number(ull n) {
-	ull x = n;
-
-	for (int i = 0; i < ITERATIONS; i++)
-	{
-		x = ((x >> 16) ^ x) * MOD;
-		x = ((x >> 16) ^ x) * MOD;
-		x = (x >> 16) ^ x;
-	}
-
-    return x;
-}
 
 int main(void)
 {
@@ -44,12 +28,12 @@ int main(void)
 		auto start = steady_clock::now(); 
 
 		// Parse the number and compute
-		ull request_number = (ull)stoi(req.matches[1]);
-		ull number = hash_number(request_number);
+		size_t request_number = (size_t)stoi(req.matches[1]);
+		size_t number = hash_number(request_number);
 
 		// Generate JSON response string
 		char json[BUFFER_SIZE];
-		snprintf(json, BUFFER_SIZE, "{\"hash\": %llu}", number);
+		snprintf(json, BUFFER_SIZE, "{\"hash\": %lu}", number);
 
 		// Set the response
         	res.set_content(json, "application/json");
@@ -57,9 +41,21 @@ int main(void)
 		auto end = steady_clock::now(); 
 
 		// Log request
-		fprintf(stderr, "GET 200 /square/%llu - %ld ms\n", request_number, duration_cast<milliseconds>(end - start).count());
-    	});
+		fprintf(stderr, "GET 200 /square/%lu - %ld ms\n", request_number, duration_cast<milliseconds>(end - start).count());
+	});
+	
+	svr.set_error_handler([](const auto& req, auto& res) {
+		auto fmt = "{\"message\":\"bad request\"}";
+		char buf[BUFFER_SIZE];
+		
+		snprintf(buf, BUFFER_SIZE, fmt, res.status);
+		
+		res.status = 400;
+		res.set_content(buf, "application/json");
+	});
 
 	fprintf(stderr, "Server listening at http://%s:%d\n", HOST, PORT);
 	svr.listen(HOST, PORT);
+
+	return 0;
 }

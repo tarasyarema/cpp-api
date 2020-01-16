@@ -17,12 +17,14 @@
 #define HOST "0.0.0.0"
 #define PORT 8080
 
+#define ull unsigned long long int
+
 using namespace httplib;
 using namespace std;
 using namespace chrono;
 
-unsigned int hash_number(unsigned int n) {
-	unsigned int x = n;
+ull hash_number(ull n) {
+	ull x = n;
 
 	for (int i = 0; i < ITERATIONS; i++)
 	{
@@ -42,21 +44,21 @@ int main(void)
 		auto start = steady_clock::now(); 
 
 		// Parse the number and compute
-		unsigned int request_number = (unsigned int)stoi(req.matches[1]);
-		unsigned int number = hash_number(request_number);
+		ull request_number = (ull)stoi(req.matches[1]);
+		ull number = hash_number(request_number);
 
 		// Generate JSON response string
 		char json[BUFFER_SIZE];
-		snprintf(json, BUFFER_SIZE, "{\"hash\": %u}", number);
+		snprintf(json, BUFFER_SIZE, "{\"hash\": %llu}", number);
 
 		// Set the response
-        res.set_content(json, "application/json");
+        	res.set_content(json, "application/json");
 
 		auto end = steady_clock::now(); 
 
 		// Log request
-		fprintf(stderr, "GET 200 /square/%u - %ld ms\n", request_number, duration_cast<milliseconds>(end - start).count());
-    });
+		fprintf(stderr, "GET 200 /square/%llu - %ld ms\n", request_number, duration_cast<milliseconds>(end - start).count());
+    	});
 
 	fprintf(stderr, "Server listening at http://%s:%d\n", HOST, PORT);
 	svr.listen(HOST, PORT);
